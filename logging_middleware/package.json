@@ -1,0 +1,14 @@
+{
+  "name": "logging_middleware",
+  "version": "1.0.0",
+  "description": "Logging middleware for Affordmed evaluation",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
