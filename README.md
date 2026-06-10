@@ -1,49 +1,39 @@
-# Campus Notifications
+# Stage 1
 
-This repository contains the frontend implementation for the Campus Notifications platform. The platform is designed to provide real-time updates regarding Placements, Events, and Results to students.
+## Priority Inbox Design Approach
 
-## Features
+The Priority Inbox is designed to ensure users never lose track of critical updates amidst a high volume of notifications. The priority algorithm evaluates notifications based on two primary dimensions: **Weight** and **Recency**.
 
-- **All Notifications:** View a feed of all recent notifications.
-- **Unread/Viewed Tracking:** Distinct visual indicators for unread vs viewed notifications using local storage.
-- **Priority Inbox:** A specialized view that displays the top 'n' most important unread notifications. Priority is determined by a combination of notification weight (Placement > Result > Event) and recency.
-- **Logging Middleware:** Integrated custom logging middleware for capturing significant events throughout the application lifecycle.
+### 1. Weight Assignment
+Different types of notifications carry different levels of importance. We assign a numerical weight to each type to establish a baseline priority:
+- **Placement:** Weight 3 (Highest Priority)
+- **Result:** Weight 2
+- **Event:** Weight 1 (Lowest Priority)
 
-## Technologies Used
+### 2. Recency
+Between notifications of the same type/weight, recency acts as the tie-breaker. Newer notifications (based on the `Timestamp`) are prioritized over older ones.
 
-- React (TypeScript)
-- Vite
-- Material UI (MUI)
-- React Router DOM
-- Axios
+### 3. Maintaining the Top 10 Efficiently
+While the frontend implementation fetches notifications and sorts them client-side for demonstration purposes, an optimal production-grade backend would handle this using one of the following efficient methods:
 
-## Getting Started
+- **Database Query Optimization:** Utilize a SQL or NoSQL query with an `ORDER BY` clause sorting first by the mapped `Weight` descending, then by `Timestamp` descending, combined with a `LIMIT 10` clause. Indexes on `(Type, Timestamp)` would drastically improve read performance.
+- **In-Memory Priority Queue (Min-Heap):** If processing an active stream of incoming notifications, a Min-Heap of size 10 can be maintained. As new notifications arrive, they are compared against the minimum priority element in the heap. If the new notification has a higher priority, the minimum is popped, and the new one is inserted. This guarantees $O(\log n)$ insertion time and constant $O(1)$ space for maintaining the top 10.
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
+---
 
-### Installation
+# Stage 2
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd notification_app_fe
-   ```
+## Frontend Architecture
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+The frontend is built using **React** with **TypeScript**, bundled by **Vite**, to ensure a fast, robust, and type-safe development environment.
 
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+### State and Persistence
+- **Viewed Tracking:** To distinguish between "new" and "already viewed" notifications without relying on a backend database, the application utilizes the browser's `localStorage`. When a user clicks a notification, its unique `ID` is appended to a `Set` of viewed IDs stored locally.
+- **Visual Distinction:** Unread notifications feature bold typography and a primary-colored "New" badge. Once viewed, the styling defaults to standard typography, removing the badge.
 
-The application will be accessible at `http://localhost:3000`.
+### Priority Inbox Implementation
+- The Priority Inbox page allows users to define the number of top notifications (`n`) and filter by `notification_type`.
+- Upon fetching the list from the Notifications API, the client-side applies the weight-recency sorting algorithm described in Stage 1 to present the prioritized list seamlessly.
 
-## Directory Structure
-
-- `/notification_app_fe`: Contains the React/Vite frontend application.
-- `/logging_middleware`: Contains the reusable TypeScript logging package.
-- `/notification_app_be`: Reserved for backend code.
+### Logging Integration
+The application utilizes a custom, reusable TypeScript package (`logging_middleware`) to capture lifecycle events. The logging utility intercepts actions (such as API fetches and authentication flows) and securely POSTs the details to the centralized evaluation logging service.
